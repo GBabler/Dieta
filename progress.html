@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Progresso | Gabriel Babler</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+            --accent-blue: #58a6ff;
+            --accent-green: #7ee787;
+            --accent-red: #f78166;
+            --accent-purple: #d2a8ff;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px 25px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+            padding: 8px 15px;
+            border-radius: 6px;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-blue);
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        .nav-links a.active {
+            color: var(--accent-blue);
+            background: rgba(88, 166, 255, 0.15);
+            font-weight: 600;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 0 20px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--accent-blue);
+            font-family: 'Fira Code', monospace;
+            font-size: 1.8rem;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* Stats Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .stat-card.weight::before {
+            background: var(--accent-blue);
+        }
+
+        .stat-card.fat::before {
+            background: var(--accent-red);
+        }
+
+        .stat-card.lean::before {
+            background: var(--accent-green);
+        }
+
+        .stat-card.goal::before {
+            background: var(--accent-purple);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'Fira Code', monospace;
+            color: #fff;
+        }
+
+        .stat-change {
+            font-size: 0.85rem;
+            margin-top: 8px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .stat-change.positive {
+            color: var(--accent-green);
+        }
+
+        .stat-change.negative {
+            color: var(--accent-red);
+        }
+
+        /* Form Section */
+        .form-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .form-section h2 {
+            color: var(--accent-blue);
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .form-group input {
+            background: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: 'Fira Code', monospace;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.1);
+        }
+
+        .btn {
+            background: var(--accent-blue);
+            color: #0d1117;
+            border: none;
+            border-radius: 8px;
+            padding: 12px 30px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Fira Code', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn:hover {
+            background: #79b8ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(88, 166, 255, 0.3);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Charts Section */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 25px;
+        }
+
+        .chart-card h3 {
+            color: var(--accent-blue);
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+
+        /* History Table */
+        .history-section {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+
+        .history-section h2 {
+            color: var(--accent-blue);
+            font-size: 1.3rem;
+            margin-bottom: 20px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .history-table {
+            width: 100%;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
+        }
+
+        .history-table thead {
+            background: #21262d;
+        }
+
+        .history-table th {
+            padding: 15px;
+            text-align: left;
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            font-family: 'Fira Code', monospace;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .history-table td {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        .history-table tbody tr:hover {
+            background: rgba(88, 166, 255, 0.05);
+        }
+
+        .delete-btn {
+            background: var(--accent-red);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-family: 'Fira Code', monospace;
+            transition: all 0.3s;
+        }
+
+        .delete-btn:hover {
+            background: #ff9580;
+            transform: scale(1.05);
+        }
+
+        /* ================= MOBILE VIEW ================= */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.2rem;
+                word-break: break-word;
+            }
+
+            .subtitle {
+                font-size: 0.85rem;
+            }
+
+            header {
+                padding: 20px 0 15px 0;
+                margin-bottom: 20px;
+            }
+
+            /* Stats Cards - 2 columns on mobile */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+            }
+
+            .stat-card {
+                padding: 15px;
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+                letter-spacing: 0.5px;
+            }
+
+            .stat-value {
+                font-size: 1.4rem;
+            }
+
+            .stat-change {
+                font-size: 0.75rem;
+            }
+
+            /* Charts - Stack vertically */
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .chart-card {
+                padding: 15px;
+            }
+
+            .chart-card h3 {
+                font-size: 1rem;
+                margin-bottom: 15px;
+            }
+
+            .chart-container {
+                height: 250px;
+            }
+
+            /* Form */
+            .form-section {
+                padding: 20px 15px;
+            }
+
+            .form-section h2 {
+                font-size: 1.1rem;
+            }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .form-group input {
+                padding: 10px 12px;
+                font-size: 0.95rem;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+                padding: 12px 20px;
+            }
+
+            /* Navigation */
+            nav {
+                padding: 12px 15px;
+            }
+
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+                gap: 10px;
+            }
+
+            .nav-links a {
+                font-size: 0.8rem;
+                padding: 6px 10px;
+            }
+
+            /* History Table - Horizontal scroll */
+            .history-section {
+                padding: 15px;
+            }
+
+            .history-section h2 {
+                font-size: 1.1rem;
+            }
+
+            .history-table {
+                font-size: 0.75rem;
+                min-width: 600px;
+            }
+
+            .history-table th,
+            .history-table td {
+                padding: 10px 6px;
+                white-space: nowrap;
+            }
+
+            .delete-btn {
+                padding: 5px 8px;
+                font-size: 0.7rem;
+            }
+        }
+
+        /* Extra small screens */
+        @media (max-width: 480px) {
+            body {
+                padding: 8px;
+            }
+
+            h1 {
+                font-size: 1rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+
+            .stat-card {
+                padding: 12px;
+            }
+
+            .stat-value {
+                font-size: 1.2rem;
+            }
+
+            .stat-label {
+                font-size: 0.65rem;
+            }
+
+            .nav-links a {
+                font-size: 0.75rem;
+                padding: 5px 8px;
+            }
+
+            .chart-container {
+                height: 200px;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state svg {
+            width: 80px;
+            height: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Navigation -->
+        <nav>
+            <div class="nav-links">
+                <a href="index.html">📋 Dieta</a>
+                <a href="progress.html" class="active">📊 Progresso</a>
+                <a href="settings.html">⚙️ Config</a>
+            </div>
+        </nav>
+
+        <!-- Header -->
+        <header>
+            <h1>gabriel_babler@progress:~$ ./track_evolution</h1>
+            <p class="subtitle">Acompanhamento de Peso e Composição Corporal</p>
+        </header>
+
+        <!-- Current Stats -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card weight">
+                <div class="stat-label">Peso Atual</div>
+                <div class="stat-value" id="currentWeight">--</div>
+                <div class="stat-change" id="weightChange"></div>
+            </div>
+            <div class="stat-card fat">
+                <div class="stat-label">% Gordura</div>
+                <div class="stat-value" id="currentFat">--</div>
+                <div class="stat-change" id="fatChange"></div>
+            </div>
+            <div class="stat-card lean">
+                <div class="stat-label">Massa Magra</div>
+                <div class="stat-value" id="leanMass">--</div>
+                <div class="stat-change" id="leanChange"></div>
+            </div>
+            <div class="stat-card goal">
+                <div class="stat-label">Falta p/ Meta</div>
+                <div class="stat-value" id="goalRemaining">--</div>
+                <div class="stat-change">Meta: 85.0 kg</div>
+            </div>
+        </div>
+
+        <!-- Add New Entry Form -->
+        <div class="form-section">
+            <h2>➕ Adicionar Nova Medição</h2>
+            <form id="progressForm">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label for="date">Data</label>
+                        <input type="date" id="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="weight">Peso (kg)</label>
+                        <input type="number" id="weight" step="0.1" placeholder="100.2" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="bodyFat">% Gordura</label>
+                        <input type="number" id="bodyFat" step="0.1" placeholder="32.0" required>
+                    </div>
+                </div>
+                <button type="submit" class="btn">💾 Salvar Medição</button>
+            </form>
+        </div>
+
+
+
+        <!-- Charts -->
+        <div class="charts-grid">
+            <div class="chart-card">
+                <h3>📉 Evolução de Peso</h3>
+                <div class="chart-container">
+                    <canvas id="weightChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-card">
+                <h3>📊 % de Gordura</h3>
+                <div class="chart-container">
+                    <canvas id="bodyCompositionChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Table -->
+        <div class="history-section">
+            <h2>📜 Histórico de Medições</h2>
+            <div style="overflow-x: auto;">
+                <table class="history-table">
+                    <thead>
+                        <tr>
+                            <th>Data</th>
+                            <th>Peso (kg)</th>
+                            <th>% Gordura</th>
+                            <th>Massa Gorda (kg)</th>
+                            <th>Massa Magra (kg)</th>
+                            <th>Variação</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody">
+                        <!-- Populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <svg fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                    <path fill-rule="evenodd"
+                        d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"
+                        clip-rule="evenodd" />
+                </svg>
+                <p>Nenhuma medição registrada ainda.</p>
+                <p style="font-size: 0.85rem; margin-top: 10px;">Adicione sua primeira medição acima!</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="progress.js"></script>
+
+</body>
+
+</html>

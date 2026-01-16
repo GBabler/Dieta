@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações | Gabriel Babler</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&display=swap"
+        rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-primary: #c9d1d9;
+            --text-secondary: #8b949e;
+            --border-color: #30363d;
+            --accent-blue: #58a6ff;
+            --accent-green: #7ee787;
+            --accent-red: #f78166;
+            --accent-purple: #d2a8ff;
+            --accent-yellow: #e3b341;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Lock Screen */
+        .lock-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-color);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .lock-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .lock-title {
+            color: var(--accent-blue);
+            font-family: 'Fira Code', monospace;
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+        }
+
+        .lock-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
+        }
+
+        .lock-input {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            padding: 15px 20px;
+            color: var(--text-primary);
+            font-size: 1.2rem;
+            font-family: 'Fira Code', monospace;
+            text-align: center;
+            letter-spacing: 5px;
+        }
+
+        .lock-input:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+            box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.2);
+        }
+
+        .lock-input::placeholder {
+            letter-spacing: 0;
+        }
+
+        .lock-btn {
+            background: var(--accent-blue);
+            color: #0d1117;
+            border: none;
+            border-radius: 8px;
+            padding: 15px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Fira Code', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .lock-btn:hover {
+            background: #79b8ff;
+            transform: translateY(-2px);
+        }
+
+        .lock-error {
+            color: var(--accent-red);
+            text-align: center;
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .lock-back {
+            color: var(--text-secondary);
+            margin-top: 20px;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .lock-back:hover {
+            color: var(--accent-blue);
+        }
+
+        /* Main Content (hidden by default) */
+        .main-content {
+            display: none;
+        }
+
+        .main-content.unlocked {
+            display: block;
+        }
+
+        /* Navigation */
+        nav {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 15px 25px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 20px;
+        }
+
+        .nav-links a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            padding: 8px 15px;
+            border-radius: 6px;
+        }
+
+        .nav-links a:hover {
+            color: var(--accent-blue);
+            background: rgba(88, 166, 255, 0.1);
+        }
+
+        .nav-links a.active {
+            color: var(--accent-blue);
+            background: rgba(88, 166, 255, 0.15);
+            font-weight: 600;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 40px 0 20px 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: var(--accent-blue);
+            font-family: 'Fira Code', monospace;
+            font-size: 1.8rem;
+            letter-spacing: -1px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* Section Cards */
+        .section-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+        }
+
+        .section-card h2 {
+            color: var(--accent-blue);
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            font-family: 'Fira Code', monospace;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-card p {
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+            font-size: 0.95rem;
+        }
+
+        .btn {
+            border: none;
+            border-radius: 8px;
+            padding: 12px 25px;
+            font-size: 1rem;
+            font-weight: 600;
+            font-family: 'Fira Code', monospace;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--accent-green);
+            color: #0d1117;
+        }
+
+        .btn-success:hover {
+            background: #9aeea2;
+            box-shadow: 0 4px 12px rgba(126, 231, 135, 0.3);
+        }
+
+        .btn-purple {
+            background: var(--accent-purple);
+            color: #0d1117;
+        }
+
+        .btn-purple:hover {
+            background: #e2c5ff;
+            box-shadow: 0 4px 12px rgba(210, 168, 255, 0.3);
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #ff9580;
+            box-shadow: 0 4px 12px rgba(247, 129, 102, 0.3);
+        }
+
+        .button-group {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Tip Box */
+        .tip-box {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid rgba(88, 166, 255, 0.3);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .tip-box strong {
+            color: var(--accent-blue);
+        }
+
+        /* Warning Box */
+        .warning-box {
+            background: rgba(247, 129, 102, 0.1);
+            border: 1px solid rgba(247, 129, 102, 0.3);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .warning-box strong {
+            color: var(--accent-red);
+        }
+
+        /* File Input Hidden */
+        .hidden-input {
+            display: none;
+        }
+
+        /* Info List */
+        .info-list {
+            list-style: none;
+            padding: 0;
+            margin: 20px 0;
+        }
+
+        .info-list li {
+            padding: 12px 15px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        .info-list li:last-child {
+            border-bottom: none;
+        }
+
+        .info-list .label {
+            color: var(--text-secondary);
+        }
+
+        .info-list .value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        /* Status Indicator */
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .status-online {
+            background: rgba(126, 231, 135, 0.15);
+            color: var(--accent-green);
+        }
+
+        .status-offline {
+            background: rgba(247, 129, 102, 0.15);
+            color: var(--accent-red);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .status-online .status-dot {
+            background: var(--accent-green);
+        }
+
+        .status-offline .status-dot {
+            background: var(--accent-red);
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 1.4rem;
+            }
+
+            .button-group {
+                flex-direction: column;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .nav-links {
+                width: 100%;
+                justify-content: center;
+            }
+
+            .info-list li {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Lock Screen -->
+    <div id="lockScreen" class="lock-screen">
+        <div class="lock-icon">🔐</div>
+        <h2 class="lock-title">Área Protegida</h2>
+        <form class="lock-form" onsubmit="return handleUnlock(event)">
+            <input type="password" id="passwordInput" class="lock-input" placeholder="Senha" maxlength="10"
+                autocomplete="off" autofocus>
+            <button type="submit" class="lock-btn">🔓 Desbloquear</button>
+            <p id="lockError" class="lock-error">❌ Senha incorreta!</p>
+        </form>
+        <a href="progress.html" class="lock-back">← Voltar para Progresso</a>
+    </div>
+
+    <!-- Main Content (hidden until unlocked) -->
+    <div id="mainContent" class="main-content">
+        <div class="container">
+            <!-- Navigation -->
+            <nav>
+                <div class="nav-links">
+                    <a href="index.html">📋 Dieta</a>
+                    <a href="progress.html">📊 Progresso</a>
+                    <a href="settings.html" class="active">⚙️ Config</a>
+                </div>
+            </nav>
+
+            <!-- Header -->
+            <header>
+                <h1>gabriel_babler@config:~$ ./system_settings</h1>
+                <p class="subtitle">Backup, Restauração e Configurações do Sistema</p>
+            </header>
+
+            <!-- Server Status -->
+            <div class="section-card">
+                <h2>🖥️ Status do Servidor</h2>
+                <p>Informações sobre o servidor local e armazenamento de dados.</p>
+
+                <ul class="info-list">
+                    <li>
+                        <span class="label">Status</span>
+                        <span id="serverStatus" class="status status-online">
+                            <span class="status-dot"></span>
+                            Verificando...
+                        </span>
+                    </li>
+                    <li>
+                        <span class="label">Servidor</span>
+                        <span class="value">http://localhost:3000</span>
+                    </li>
+                    <li>
+                        <span class="label">Armazenamento</span>
+                        <span class="value">data/progress_data.json</span>
+                    </li>
+                    <li>
+                        <span class="label">Total de Medições</span>
+                        <span class="value" id="totalMeasurements">--</span>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Backup Section -->
+            <div class="section-card">
+                <h2>📥 Exportar Dados (Backup)</h2>
+                <p>Faça download de todos os seus dados em formato JSON. Guarde este arquivo em um local seguro.</p>
+
+                <div class="button-group">
+                    <button onclick="handleExport()" class="btn btn-success">
+                        📥 Baixar Backup Completo
+                    </button>
+                </div>
+
+                <div class="tip-box">
+                    <strong>💡 Dica:</strong> Recomendamos fazer backup semanalmente, após adicionar suas novas
+                    medições.
+                </div>
+            </div>
+
+            <!-- Restore Section -->
+            <div class="section-card">
+                <h2>📤 Importar Backup</h2>
+                <p>Restaure seus dados a partir de um arquivo de backup JSON. Isso substituirá todos os dados atuais.
+                </p>
+
+                <div class="button-group">
+                    <label for="importFile" class="btn btn-purple">
+                        📤 Selecionar Arquivo de Backup
+                    </label>
+                    <input type="file" id="importFile" accept=".json" class="hidden-input"
+                        onchange="handleImport(event)">
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Atenção:</strong> A importação irá substituir TODOS os dados atuais.
+                </div>
+            </div>
+
+            <!-- Clear Data Section -->
+            <div class="section-card">
+                <h2>🗑️ Limpar Dados</h2>
+                <p>Remove todas as medições do sistema. Esta ação não pode ser desfeita.</p>
+
+                <div class="button-group">
+                    <button onclick="handleClearData()" class="btn btn-danger">
+                        🗑️ Apagar Todos os Dados
+                    </button>
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Cuidado:</strong> Esta ação é permanente! Faça um backup antes de limpar os dados.
+                </div>
+            </div>
+
+            <!-- System Info -->
+            <div class="section-card">
+                <h2>ℹ️ Informações do Sistema</h2>
+                <p>Detalhes técnicos sobre o sistema de acompanhamento.</p>
+
+                <ul class="info-list">
+                    <li>
+                        <span class="label">Versão</span>
+                        <span class="value">1.0.0</span>
+                    </li>
+                    <li>
+                        <span class="label">Desenvolvido para</span>
+                        <span class="value">Gabriel Babler</span>
+                    </li>
+                    <li>
+                        <span class="label">Meta de Peso</span>
+                        <span class="value">85.0 kg</span>
+                    </li>
+                    <li>
+                        <span class="label">Tecnologias</span>
+                        <span class="value">Node.js + Express + Chart.js</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api/progress';
+        let sessionPassword = null;
+
+        // Handle unlock
+        async function handleUnlock(event) {
+            event.preventDefault();
+
+            const password = document.getElementById('passwordInput').value;
+            const errorEl = document.getElementById('lockError');
+
+            try {
+                const response = await fetch('http://localhost:3000/api/verify-password', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ password })
+                });
+
+                if (response.ok) {
+                    // Password correct - unlock the page
+                    sessionPassword = password;
+                    document.getElementById('lockScreen').style.display = 'none';
+                    document.getElementById('mainContent').classList.add('unlocked');
+                    errorEl.style.display = 'none';
+                    checkServerStatus();
+                } else {
+                    // Wrong password
+                    errorEl.style.display = 'block';
+                    document.getElementById('passwordInput').value = '';
+                    document.getElementById('passwordInput').focus();
+                }
+            } catch (error) {
+                alert('❌ Erro ao conectar com o servidor. Certifique-se de que está rodando.');
+            }
+
+            return false;
+        }
+
+        // Check server status
+        async function checkServerStatus() {
+            const statusEl = document.getElementById('serverStatus');
+            const countEl = document.getElementById('totalMeasurements');
+
+            try {
+                const response = await fetch(API_URL);
+                if (response.ok) {
+                    const data = await response.json();
+                    statusEl.className = 'status status-online';
+                    statusEl.innerHTML = '<span class="status-dot"></span> Online';
+                    countEl.textContent = data.length + ' medições';
+                } else {
+                    throw new Error('Server error');
+                }
+            } catch (error) {
+                statusEl.className = 'status status-offline';
+                statusEl.innerHTML = '<span class="status-dot"></span> Offline';
+                countEl.textContent = 'Indisponível';
+            }
+        }
+
+        // Export data
+        async function handleExport() {
+            try {
+                const response = await fetch(API_URL);
+                const data = await response.json();
+
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `diet_backup_${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                URL.revokeObjectURL(url);
+
+                alert('✅ Backup exportado com sucesso!\n\nSalve este arquivo em um local seguro.');
+            } catch (error) {
+                alert('❌ Erro ao exportar dados: ' + error.message);
+            }
+        }
+
+        // Import data
+        async function handleImport(event) {
+            const file = event.target.files[0];
+
+            if (!file) return;
+
+            if (!confirm('⚠️ ATENÇÃO!\n\nA importação irá SUBSTITUIR todos os dados atuais.\n\nDeseja continuar?')) {
+                event.target.value = '';
+                return;
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = async (e) => {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+
+                    if (!Array.isArray(importedData)) {
+                        throw new Error('Formato de arquivo inválido');
+                    }
+
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Password': sessionPassword
+                        },
+                        body: JSON.stringify(importedData)
+                    });
+
+                    if (response.status === 401) {
+                        alert('❌ Senha incorreta!');
+                        return;
+                    }
+
+                    if (!response.ok) throw new Error('Erro ao salvar dados');
+
+                    alert(`✅ Backup restaurado com sucesso!\n\n${importedData.length} medições foram importadas.`);
+                    checkServerStatus();
+                } catch (error) {
+                    alert('❌ Erro: ' + error.message);
+                }
+            };
+
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // Clear all data
+        async function handleClearData() {
+            if (!confirm('⚠️ ATENÇÃO!\n\nVocê está prestes a APAGAR TODOS os dados.\nEsta ação NÃO pode ser desfeita!\n\nDeseja continuar?')) {
+                return;
+            }
+
+            if (!confirm('🚨 ÚLTIMA CONFIRMAÇÃO!\n\nTem CERTEZA ABSOLUTA que deseja apagar tudo?\n\nRecomendamos fazer um backup antes.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Password': sessionPassword
+                    },
+                    body: JSON.stringify([])
+                });
+
+                if (response.status === 401) {
+                    alert('❌ Senha incorreta!');
+                    return;
+                }
+
+                if (!response.ok) throw new Error('Erro ao limpar dados');
+
+                alert('✅ Todos os dados foram removidos.');
+                checkServerStatus();
+            } catch (error) {
+                alert('❌ Erro: ' + error.message);
+            }
+        }
+    </script>
+
+</body>
+
+</html>
