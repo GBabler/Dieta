@@ -1,14 +1,11 @@
 const express = require('express');
-const fs = require('fs').promises;
-const path = require('path');
 const cors = require('cors');
+require('dotenv').config();
 
 const app = express();
-const PORT = 3000;
-const DATA_FILE = path.join(__dirname, 'data', 'progress_data.json');
-
-// Senha de proteção (hash simples para comparação)
-const SYSTEM_PASSWORD = '8315';
+const pool = require('./db');
+const PORT = process.env.PORT || 3000;
+const SYSTEM_PASSWORD = process.env.SYSTEM_PASSWORD || '8315';
 
 // Middleware
 app.use(cors());
@@ -37,26 +34,63 @@ app.post('/api/verify-password', (req, res) => {
     }
 });
 
-// Get all progress data
+// Get all progress data (sorted by date, newest first)
 app.get('/api/progress', async (req, res) => {
     try {
-        const data = await fs.readFile(DATA_FILE, 'utf8');
-        res.json(JSON.parse(data));
+        const [rows] = await pool.execute(
+            'SELECT id, date, weight, bodyFat FROM progress_entries ORDER BY date DESC, id DESC'
+        );
+        res.json(rows);
     } catch (error) {
-        console.error('Error reading data:', error);
-        res.status(500).json({ error: 'Failed to read data' });
+        console.error('❌ Erro ao buscar dados:', error);
+        res.status(500).json({ error: 'Falha ao carregar dados' });
     }
 });
 
-// Save progress data (PROTECTED)
+// Save/Replace all progress data (PROTECTED)
 app.post('/api/progress', validatePassword, async (req, res) => {
+    const connection = await pool.getConnection();
+    
     try {
         const data = req.body;
-        await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
-        res.json({ success: true, message: 'Data saved successfully' });
+
+        // Validar dados
+        if (!Array.isArray(data)) {
+            return res.status(400).json({ error: 'Dados devem ser um array' });
+        }
+
+        await connection.beginTransaction();
+
+        // Limpar tabela
+        await connection.execute('DELETE FROM progress_entries');
+
+        // Inserir novos dados com prepared statements
+        for (const entry of data) {
+            if (!entry.date || entry.weight === undefined || entry.bodyFat === undefined) {
+                throw new Error('Dados incompletos na entrada');
+            }
+
+            const id = entry.id || Date.now();
+            await connection.execute(
+                'INSERT INTO progress_entries (id, date, weight, bodyFat) VALUES (?, ?, ?, ?)',
+                [id, entry.date, parseFloat(entry.weight), parseFloat(entry.bodyFat)]
+            );
+        }
+
+        await connection.commit();
+        
+        // Retornar dados inseridos
+        const [rows] = await connection.execute(
+            'SELECT id, date, weight, bodyFat FROM progress_entries ORDER BY date DESC, id DESC'
+        );
+
+        res.json({ success: true, data: rows });
     } catch (error) {
-        console.error('Error saving data:', error);
-        res.status(500).json({ error: 'Failed to save data' });
+        await connection.rollback();
+        console.error('❌ Erro ao salvar dados:', error);
+        res.status(500).json({ error: 'Falha ao salvar dados' });
+    } finally {
+        connection.release();
     }
 });
 
@@ -65,36 +99,41 @@ app.post('/api/progress/add', validatePassword, async (req, res) => {
     try {
         const { date, weight, bodyFat } = req.body;
 
-        // Read current data
-        const fileData = await fs.readFile(DATA_FILE, 'utf8');
-        const data = JSON.parse(fileData);
+        // Validar dados
+        if (!date || weight === undefined || bodyFat === undefined) {
+            return res.status(400).json({ error: 'Data, peso e % de gordura são obrigatórios' });
+        }
 
-        // Add new entry with unique ID
-        const newEntry = {
-            id: Date.now(),
-            date,
-            weight: parseFloat(weight),
-            bodyFat: parseFloat(bodyFat)
-        };
+        // Validar formato de data (YYYY-MM-DD)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            return res.status(400).json({ error: 'Data deve estar no formato YYYY-MM-DD' });
+        }
 
-        data.push(newEntry);
+        const id = Date.now();
+        const weightNum = parseFloat(weight);
+        const bodyFatNum = parseFloat(bodyFat);
 
-        // Sort by date (newest first)
-        data.sort((a, b) => {
-            const dateCompare = new Date(b.date) - new Date(a.date);
-            if (dateCompare === 0) {
-                return (b.id || 0) - (a.id || 0);
-            }
-            return dateCompare;
-        });
+        // Usar prepared statement para prevenir SQL injection
+        await pool.execute(
+            'INSERT INTO progress_entries (id, date, weight, bodyFat) VALUES (?, ?, ?, ?)',
+            [id, date, weightNum, bodyFatNum]
+        );
 
-        // Save to file
-        await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+        // Retornar todos os dados atualizados
+        const [rows] = await pool.execute(
+            'SELECT id, date, weight, bodyFat FROM progress_entries ORDER BY date DESC, id DESC'
+        );
 
-        res.json({ success: true, data });
+        res.json({ success: true, data: rows });
     } catch (error) {
-        console.error('Error adding entry:', error);
-        res.status(500).json({ error: 'Failed to add entry' });
+        console.error('❌ Erro ao adicionar entrada:', error);
+        
+        // Erro de chave duplicada (mesma data)
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ error: 'Já existe medição para esta data' });
+        }
+
+        res.status(500).json({ error: 'Falha ao adicionar medição' });
     }
 });
 
@@ -103,20 +142,29 @@ app.delete('/api/progress/:id', validatePassword, async (req, res) => {
     try {
         const id = parseInt(req.params.id);
 
-        // Read current data
-        const fileData = await fs.readFile(DATA_FILE, 'utf8');
-        let data = JSON.parse(fileData);
+        if (isNaN(id)) {
+            return res.status(400).json({ error: 'ID inválido' });
+        }
 
-        // Filter out the entry
-        data = data.filter(entry => entry.id !== id);
+        // Usar prepared statement
+        const [result] = await pool.execute(
+            'DELETE FROM progress_entries WHERE id = ?',
+            [id]
+        );
 
-        // Save to file
-        await fs.writeFile(DATA_FILE, JSON.stringify(data, null, 2), 'utf8');
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: 'Medição não encontrada' });
+        }
 
-        res.json({ success: true, data });
+        // Retornar dados atualizados
+        const [rows] = await pool.execute(
+            'SELECT id, date, weight, bodyFat FROM progress_entries ORDER BY date DESC, id DESC'
+        );
+
+        res.json({ success: true, data: rows });
     } catch (error) {
-        console.error('Error deleting entry:', error);
-        res.status(500).json({ error: 'Failed to delete entry' });
+        console.error('❌ Erro ao excluir entrada:', error);
+        res.status(500).json({ error: 'Falha ao excluir medição' });
     }
 });
 
@@ -126,11 +174,13 @@ app.listen(PORT, () => {
 ║                                                            ║
 ║   🍽️  Sistema de Dieta - Servidor Rodando!               ║
 ║                                                            ║
+║   🗄️  Banco de Dados: MySQL ✅                            ║
+║                                                            ║
 ║   📊 Acesse: http://localhost:${PORT}                        ║
 ║   📋 Dieta: http://localhost:${PORT}/index.html             ║
 ║   📈 Progresso: http://localhost:${PORT}/progress.html      ║
 ║                                                            ║
-║   💾 Dados salvos em: data/progress_data.json             ║
+║   💾 Dados: ${process.env.DB_NAME}@${process.env.DB_HOST}   ║
 ║                                                            ║
 ║   Pressione Ctrl+C para parar o servidor                  ║
 ║                                                            ║
