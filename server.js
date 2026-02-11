@@ -3,7 +3,7 @@ const cors = require('cors');
 require('dotenv').config();
 
 const app = express();
-const pool = require('./db');
+const db = require('./db');
 const PORT = process.env.PORT || 3000;
 const SYSTEM_PASSWORD = process.env.SYSTEM_PASSWORD || '8315';
 
@@ -35,12 +35,15 @@ app.post('/api/verify-password', (req, res) => {
 });
 
 // Get all progress data (sorted by date, newest first)
-app.get('/api/progress', async (req, res) => {
+app.get('/api/progress', (req, res) => {
     try {
-        const [rows] = await pool.execute(
-            'SELECT id, date, weight, bodyFat FROM progress_entries ORDER BY date DESC, id DESC'
-        );
-        res.json(rows);
+        const data = db.getAll();
+        // Ordenar por data decrescente
+        const sorted = data.sort((a, b) => {
+            if (b.date === a.date) return b.id - a.id;
+            return b.date.localeCompare(a.date);
+        });
+        res.json(sorted);
     } catch (error) {
         console.error('❌ Erro ao buscar dados:', error);
         res.status(500).json({ error: 'Falha ao carregar dados' });
@@ -48,9 +51,7 @@ app.get('/api/progress', async (req, res) => {
 });
 
 // Save/Replace all progress data (PROTECTED)
-app.post('/api/progress', validatePassword, async (req, res) => {
-    const connection = await pool.getConnection();
-    
+app.post('/api/progress', validatePassword, (req, res) => {
     try {
         const data = req.body;
 
@@ -59,43 +60,23 @@ app.post('/api/progress', validatePassword, async (req, res) => {
             return res.status(400).json({ error: 'Dados devem ser um array' });
         }
 
-        await connection.beginTransaction();
-
-        // Limpar tabela
-        await connection.execute('DELETE FROM progress_entries');
-
-        // Inserir novos dados com prepared statements
+        // Validar cada entrada
         for (const entry of data) {
             if (!entry.date || entry.weight === undefined || entry.bodyFat === undefined) {
-                throw new Error('Dados incompletos na entrada');
+                return res.status(400).json({ error: 'Dados incompletos na entrada' });
             }
-
-            const id = entry.id || Date.now();
-            await connection.execute(
-                'INSERT INTO progress_entries (id, date, weight, bodyFat) VALUES (?, ?, ?, ?)',
-                [id, entry.date, parseFloat(entry.weight), parseFloat(entry.bodyFat)]
-            );
         }
 
-        await connection.commit();
-        
-        // Retornar dados inseridos
-        const [rows] = await connection.execute(
-            'SELECT id, date, weight, bodyFat FROM progress_entries ORDER BY date DESC, id DESC'
-        );
-
-        res.json({ success: true, data: rows });
+        const result = db.replaceAll(data);
+        res.json({ success: true, data: result });
     } catch (error) {
-        await connection.rollback();
         console.error('❌ Erro ao salvar dados:', error);
         res.status(500).json({ error: 'Falha ao salvar dados' });
-    } finally {
-        connection.release();
     }
 });
 
 // Add new entry (PROTECTED)
-app.post('/api/progress/add', validatePassword, async (req, res) => {
+app.post('/api/progress/add', validatePassword, (req, res) => {
     try {
         const { date, weight, bodyFat } = req.body;
 
@@ -110,26 +91,27 @@ app.post('/api/progress/add', validatePassword, async (req, res) => {
         }
 
         const id = Date.now();
-        const weightNum = parseFloat(weight);
-        const bodyFatNum = parseFloat(bodyFat);
+        const entry = {
+            id,
+            date,
+            weight: parseFloat(weight),
+            bodyFat: parseFloat(bodyFat)
+        };
 
-        // Usar prepared statement para prevenir SQL injection
-        await pool.execute(
-            'INSERT INTO progress_entries (id, date, weight, bodyFat) VALUES (?, ?, ?, ?)',
-            [id, date, weightNum, bodyFatNum]
-        );
+        const result = db.add(entry);
 
-        // Retornar todos os dados atualizados
-        const [rows] = await pool.execute(
-            'SELECT id, date, weight, bodyFat FROM progress_entries ORDER BY date DESC, id DESC'
-        );
+        // Ordenar resultado
+        const sorted = result.sort((a, b) => {
+            if (b.date === a.date) return b.id - a.id;
+            return b.date.localeCompare(a.date);
+        });
 
-        res.json({ success: true, data: rows });
+        res.json({ success: true, data: sorted });
     } catch (error) {
         console.error('❌ Erro ao adicionar entrada:', error);
-        
-        // Erro de chave duplicada (mesma data)
-        if (error.code === 'ER_DUP_ENTRY') {
+
+        // Erro de data duplicada
+        if (error.message === 'DUPLICATE_DATE') {
             return res.status(400).json({ error: 'Já existe medição para esta data' });
         }
 
@@ -138,7 +120,7 @@ app.post('/api/progress/add', validatePassword, async (req, res) => {
 });
 
 // Delete entry (PROTECTED)
-app.delete('/api/progress/:id', validatePassword, async (req, res) => {
+app.delete('/api/progress/:id', validatePassword, (req, res) => {
     try {
         const id = parseInt(req.params.id);
 
@@ -146,22 +128,19 @@ app.delete('/api/progress/:id', validatePassword, async (req, res) => {
             return res.status(400).json({ error: 'ID inválido' });
         }
 
-        // Usar prepared statement
-        const [result] = await pool.execute(
-            'DELETE FROM progress_entries WHERE id = ?',
-            [id]
-        );
+        const result = db.delete(id);
 
-        if (result.affectedRows === 0) {
+        if (result === null) {
             return res.status(404).json({ error: 'Medição não encontrada' });
         }
 
-        // Retornar dados atualizados
-        const [rows] = await pool.execute(
-            'SELECT id, date, weight, bodyFat FROM progress_entries ORDER BY date DESC, id DESC'
-        );
+        // Ordenar resultado
+        const sorted = result.sort((a, b) => {
+            if (b.date === a.date) return b.id - a.id;
+            return b.date.localeCompare(a.date);
+        });
 
-        res.json({ success: true, data: rows });
+        res.json({ success: true, data: sorted });
     } catch (error) {
         console.error('❌ Erro ao excluir entrada:', error);
         res.status(500).json({ error: 'Falha ao excluir medição' });
@@ -174,13 +153,13 @@ app.listen(PORT, () => {
 ║                                                            ║
 ║   🍽️  Sistema de Dieta - Servidor Rodando!               ║
 ║                                                            ║
-║   🗄️  Banco de Dados: MySQL ✅                            ║
+║   🗄️  Banco de Dados: JSON (Arquivo Local) ✅             ║
 ║                                                            ║
 ║   📊 Acesse: http://localhost:${PORT}                        ║
 ║   📋 Dieta: http://localhost:${PORT}/index.html             ║
 ║   📈 Progresso: http://localhost:${PORT}/progress.html      ║
 ║                                                            ║
-║   💾 Dados: ${process.env.DB_NAME}@${process.env.DB_HOST}   ║
+║   💾 Arquivo: data/progress_data.json                      ║
 ║                                                            ║
 ║   Pressione Ctrl+C para parar o servidor                  ║
 ║                                                            ║

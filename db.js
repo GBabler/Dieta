@@ -1,42 +1,80 @@
-const mysql = require('mysql2/promise');
-require('dotenv').config();
+const fs = require('fs');
+const path = require('path');
 
-const pool = mysql.createPool({
-    host: process.env.DB_HOST || 'localhost',
-    port: process.env.DB_PORT || 3306,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0,
-});
+// Caminho do arquivo de dados
+const dataPath = path.join(__dirname, 'data', 'progress_data.json');
 
-// Verificar conexão e criar tabela se não existir
-pool.getConnection().then(async (connection) => {
-    try {
-        // Criar tabela progress_entries
-        await connection.execute(`
-            CREATE TABLE IF NOT EXISTS progress_entries (
-                id BIGINT PRIMARY KEY,
-                date DATE NOT NULL UNIQUE,
-                weight DECIMAL(5, 2) NOT NULL,
-                bodyFat DECIMAL(5, 2) NOT NULL,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                INDEX idx_date (date DESC)
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-        `);
+// Garantir que a pasta data existe
+const dataDir = path.dirname(dataPath);
+if (!fs.existsSync(dataDir)) {
+    fs.mkdirSync(dataDir, { recursive: true });
+}
 
-        console.log('✅ Tabela progress_entries criada/verificada com sucesso');
-        connection.release();
-    } catch (error) {
-        console.error('❌ Erro ao verificar/criar tabela:', error);
-        process.exit(1);
+// Inicializar arquivo se não existir
+if (!fs.existsSync(dataPath)) {
+    fs.writeFileSync(dataPath, JSON.stringify([], null, 2));
+    console.log('✅ Arquivo de dados criado:', dataPath);
+} else {
+    console.log('✅ Arquivo de dados encontrado:', dataPath);
+}
+
+// Funções para manipular dados
+const db = {
+    // Ler todos os dados
+    getAll() {
+        try {
+            const data = fs.readFileSync(dataPath, 'utf8');
+            return JSON.parse(data);
+        } catch (error) {
+            console.error('Erro ao ler dados:', error);
+            return [];
+        }
+    },
+
+    // Salvar todos os dados
+    saveAll(data) {
+        try {
+            fs.writeFileSync(dataPath, JSON.stringify(data, null, 2));
+            return true;
+        } catch (error) {
+            console.error('Erro ao salvar dados:', error);
+            return false;
+        }
+    },
+
+    // Adicionar nova entrada
+    add(entry) {
+        const data = this.getAll();
+
+        // Verificar se já existe entrada para esta data
+        const exists = data.some(item => item.date === entry.date);
+        if (exists) {
+            throw new Error('DUPLICATE_DATE');
+        }
+
+        data.push(entry);
+        this.saveAll(data);
+        return this.getAll(); // Retornar dados ordenados
+    },
+
+    // Deletar entrada por ID
+    delete(id) {
+        const data = this.getAll();
+        const filtered = data.filter(item => item.id !== id);
+
+        if (filtered.length === data.length) {
+            return null; // Não encontrou
+        }
+
+        this.saveAll(filtered);
+        return this.getAll();
+    },
+
+    // Substituir todos os dados
+    replaceAll(newData) {
+        this.saveAll(newData);
+        return this.getAll();
     }
-}).catch(error => {
-    console.error('❌ Erro ao conectar ao banco de dados:', error);
-    process.exit(1);
-});
+};
 
-module.exports = pool;
+module.exports = db;
