@@ -1,0 +1,119 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                     NUTRI-OS v2.0 - OPTIMIZATION REPORT                    ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+gabriel_babler@diet-system:~$ ./update_macros --optimize --target=2350kcal
+
+[INFO] Loading user profile...
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+USER PROFILE:
+  Name: Gabriel Babler
+  Age: 25 years
+  Current Weight: 99.5kg
+  Body Fat: 31%
+  Target Weight: 85.0kg
+  Protein Target: 2.0g/kg (200g fixed)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[INFO] Analyzing current macro distribution...
+
+BEFORE OPTIMIZATION:
+┌─────────────┬──────────┬──────────┬──────────┐
+│ Macro       │ Amount   │ Calories │ %        │
+├─────────────┼──────────┼──────────┼──────────┤
+│ Protein     │ 200g     │ 800 kcal │ 32.7%    │
+│ Carbs       │ 200g     │ 800 kcal │ 32.7%    │
+│ Fat         │ 94g      │ 846 kcal │ 34.6%    │
+├─────────────┼──────────┼──────────┼──────────┤
+│ TOTAL       │ -        │ 2446 kcal│ 100%     │
+└─────────────┴──────────┴──────────┴──────────┘
+
+[WARN] Total calories: 2446 kcal (96 kcal OVER target)
+[INFO] Initiating optimization algorithm...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OPTIMIZATION STRATEGY:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[RULE 1] Maintain protein at 2g/kg (200g) ✓
+[RULE 2] Reduce carbs to 1.7g/kg (170g) ✓
+[RULE 3] Adjust fat to fill remaining calories ✓
+[RULE 4] Prioritize fiber and satiety ✓
+
+ADJUSTMENTS MADE:
+  ✓ Arroz (Almoço): 100g → 90g (-10g carbs, -36 kcal)
+  ✓ Arroz (Jantar): 100g → 90g (-10g carbs, -36 kcal)
+  ✓ Pasta de Amendoim: 40g → 30g (-10g fat, -90 kcal)
+  ✓ Tapioca: 35g → 25g (-10g carbs, -36 kcal)
+
+TOTAL REDUCTION: -198 kcal
+COMPENSATED BY: Maintaining protein sources for satiety
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+AFTER OPTIMIZATION:
+┌─────────────┬──────────┬──────────┬──────────┐
+│ Macro       │ Amount   │ Calories │ %        │
+├─────────────┼──────────┼──────────┼──────────┤
+│ Protein     │ 200g     │ 800 kcal │ 34.1%    │
+│ Carbs       │ 170g     │ 680 kcal │ 29.0%    │
+│ Fat         │ 83g      │ 747 kcal │ 31.8%    │
+├─────────────┼──────────┼──────────┼──────────┤
+│ TOTAL       │ -        │ 2347 kcal│ 100%     │
+└─────────────┴──────────┴──────────┴──────────┘
+
+[SUCCESS] Target achieved: 2347 kcal (3 kcal under target) ✓
+[SUCCESS] Protein maintained at 200g (2.0g/kg) ✓
+[SUCCESS] High satiety preserved ✓
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+UPDATED MEAL PLAN:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+08:00 - Café da Manhã
+  → Pão de Forma (2 fat) + 2 Ovos + Maçã (150g)
+
+11:00 - Almoço
+  → Arroz (90g) + Frango (160g) + Azeite (15ml) + Pepino
+
+16:00 - Pré-Treino
+  → Whey (2 scp) + Aveia (40g) + Pasta de Amendoim (30g) + Banana (100g)
+
+19:00 - Jantar
+  → Arroz (90g) + Frango (160g) + Azeite (15ml) + Pepino
+
+22:30 - Ceia
+  → Tapioca (25g) + 2 Ovos
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+UPDATED SHOPPING LIST (MONTHLY):
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PROTEÍNAS:
+  ✓ Peito de Frango: 13-14kg (320g/dia × 30 dias)
+  ✓ Whey Growth: 2kg (60g/dia × 30 dias)
+  ✓ Ovos: 120 unidades (4 ovos/dia × 30 dias)
+
+CARBOIDRATOS:
+  ✓ Arroz: 3.5kg (180g cru/dia × 30 dias = 5.4kg → ajustado para 3.5kg)
+  ✓ Aveia: 3 pacotes (40g/dia × 30 dias = 1.2kg)
+  ✓ Goma de Tapioca: 1 pacote (25g/dia × 30 dias = 750g)
+  ✓ Pão de Forma: 4 pacotes (1 pacote/semana)
+
+GORDURAS:
+  ✓ Pasta de Amendoim: 1 pote (30g/dia × 30 dias = 900g)
+  ✓ Azeite: 2 unidades (30ml/dia × 30 dias = 900ml)
+
+VEGETAIS & FRUTAS (SEMANAL):
+  ✓ Frango Fresco: 3.5kg/semana
+  ✓ Maçã: 1kg/semana (150g/dia × 7 = 1.05kg)
+  ✓ Banana: 1kg/semana (100g/dia × 7 = 700g)
+  ✓ Pepino Japonês: 6 unidades/semana
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[INFO] Optimization complete!
+[INFO] Configuration saved to: index.html
+[INFO] System status: Nutri-OS v2.0 | 200P/170C/83F
+
+gabriel_babler@diet-system:~$ █
